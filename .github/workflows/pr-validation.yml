@@ -1,0 +1,54 @@
+name: PR validation
+on:
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: "npm" }
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+      - name: Commit message check
+        run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=HEAD
+
+      # Runs the suite once. The coverage floor is enforced by
+      # coverage.thresholds in vitest.config.js (15.1), not by a flag here.
+      - run: npm test
+        env:
+          CDS_TEST_ENV_CHECK: "y" # fail loudly on cds.env loaded too early
+
+      - run: npm audit --audit-level=high
+      - uses: gitleaks/gitleaks-action@v2
+
+      # Datadog Code Security runs in its own push-triggered workflow (18.4),
+      # because the Datadog action does not support the pull_request trigger.
+      # There is no separate static-analysis tool: Datadog SAST covers both
+      # security and code-quality rules, and ESLint enforces the structural
+      # limits in section 16.
+
+      # Prove the MTA still builds. The archive is DISCARDED: the only promotable
+      # artefact is the one release.yml builds from a protected branch (19.3).
+      - name: MTA build check
+        run: |
+          npm i -g mbt
+          mbt build -p=cf --mtar=pr-check.mtar
+
+      - name: Work-item reference present
+        run: |
+          echo "${{ github.head_ref }}" | grep -Eq '^(feature|bugfix|hotfix)/BLK-[0-9]+-' \
+            || { echo "Branch name must carry a BLK- work item"; exit 1; }

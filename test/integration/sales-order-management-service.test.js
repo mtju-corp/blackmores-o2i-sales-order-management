@@ -38,12 +38,12 @@ describe("SalesOrderManagementService - End-to-End Integration Tests", () => {
 
         // Capture the ID assigned by the database handler
         createdOrderId = response.data.ID;
-        cds.log().info()("New Order ID", createdOrderId);
+        cds.log().info("New Order ID", createdOrderId);
       } catch (error) {
         // 🔍 Log the hidden OData error matrix straight to the terminal console
         cds
           .log()
-          .info("🔴 FULL ODATA ERROR DETAILS:", JSON.stringify(error.response.data, null, 2));
+          .info("🔴 FULL ODATA ERROR DETAILS:", JSON.stringify(error?.response?.data, null, 2));
         throw error; // Re-throw so the test still fails cleanly after logging
       }
     });
@@ -86,8 +86,9 @@ describe("SalesOrderManagementService - End-to-End Integration Tests", () => {
       expect(response.status).toBe(200);
 
       // Verify the change stuck
-      const verify = await GET(`${BASE_URL}/SalesOrders(${targetId})`);
-      expect(verify.data.status).to.equal("In Progress");
+      const verify = await GET(`${BASE_URL}/SalesOrders(${targetId})`, { auth: PROCESSOR });
+      cds.log().info("verify:", verify.data);
+      expect(verify.data.status_code).to.equal("IP");
     });
 
     it("should delete a sales order", async () => {
@@ -95,8 +96,10 @@ describe("SalesOrderManagementService - End-to-End Integration Tests", () => {
         orderNumber: "SO-2026-0001",
         customerName: "Delete Test Customer",
         orderDate: "2025-06-01",
-        status: "New",
-        currency: "AUD"
+        status: { code: "NW" },
+        currency: "AUD",
+        salesOrg: "1000",
+        distributionChannel: "00"
       };
 
       // Create temporary item to drop

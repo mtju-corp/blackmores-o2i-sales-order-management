@@ -20,6 +20,7 @@
     "eslint": "^10.11.0",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
     "mbt": "^1.2.49",
     "prettier": "^3.9.10",
     "rimraf": "^5.0.5",
@@ -101,5 +102,10 @@
   "sapux": [
     "app/sales-orders-ui",
     "app/sales-orders2-ui"
-  ]
+  ],
+  "lint-staged": {
+    "*.{js,mjs,cjs,ts,json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
 }

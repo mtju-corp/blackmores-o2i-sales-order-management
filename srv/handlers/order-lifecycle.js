@@ -51,9 +51,8 @@ export function registerOrderLifecycleHandlers(srv) {
     const correlationId = req.headers?.["x-correlation-id"] ?? "n/a";
     const { ID } = req.data;
 
-    const [existing] = await req.tx.run( SELECT.from(SalesOrders, ["ID", "status_code", "isBlocked"])
-      .where({ ID })
-      .limit(1)
+    const [existing] = await req.tx.run(
+      SELECT.from(SalesOrders, ["ID", "status_code", "isBlocked"]).where({ ID }).limit(1)
     );
 
     if (!existing) return;
@@ -89,15 +88,10 @@ export function registerOrderLifecycleHandlers(srv) {
     const correlationId = req.headers?.["x-correlation-id"] ?? "n/a";
     const { ID } = req.params[0];
 
-    const [order] = await req.tx.run( SELECT.from(SalesOrders, [
-      "ID",
-      "orderNumber",
-      "status_code",
-      "isBlocked",
-      "isCreditHold"
-    ])
-      .where({ ID })
-      .limit(1)
+    const [order] = await req.tx.run(
+      SELECT.from(SalesOrders, ["ID", "orderNumber", "status_code", "isBlocked", "isCreditHold"])
+        .where({ ID })
+        .limit(1)
     );
 
     if (!order) {
@@ -131,14 +125,14 @@ export function registerOrderLifecycleHandlers(srv) {
       });
     }
 
-    await req.tx.run( UPDATE(SalesOrders).set({ status_code: "IP" }).where({ ID }) );
+    await req.tx.run(UPDATE(SalesOrders).set({ status_code: "IP" }).where({ ID }));
 
     log.info(
       { correlationId, ID, orderNumber: order.orderNumber },
       "Sales order submitted for processing"
     );
 
-    const [updated] = await req.tx.run( SELECT.from(SalesOrders).where({ ID }).limit(1) );
+    const [updated] = await req.tx.run(SELECT.from(SalesOrders).where({ ID }).limit(1));
 
     return updated;
   });
@@ -151,9 +145,8 @@ export function registerOrderLifecycleHandlers(srv) {
     const { ID } = req.params[0];
     const { reason } = req.data;
 
-    const [order] = await req.tx.run( SELECT.from(SalesOrders, ["ID", "orderNumber", "status_code"])
-      .where({ ID })
-      .limit(1)
+    const [order] = await req.tx.run(
+      SELECT.from(SalesOrders, ["ID", "orderNumber", "status_code"]).where({ ID }).limit(1)
     );
 
     if (!order) {
@@ -172,14 +165,14 @@ export function registerOrderLifecycleHandlers(srv) {
     const updatePayload = { status_code: "CA" };
     if (reason) updatePayload.rejectionReason_code = reason;
 
-    await req.tx.run( UPDATE(SalesOrders).set(updatePayload).where({ ID }) );
+    await req.tx.run(UPDATE(SalesOrders).set(updatePayload).where({ ID }));
 
     log.info(
       { correlationId, ID, orderNumber: order.orderNumber, reason },
       "Sales order cancelled"
     );
 
-    const [updated] = await req.tx.run( SELECT.from(SalesOrders).where({ ID }).limit(1) );
+    const [updated] = await req.tx.run(SELECT.from(SalesOrders).where({ ID }).limit(1));
 
     return updated;
   });
@@ -191,9 +184,8 @@ export function registerOrderLifecycleHandlers(srv) {
     const correlationId = req.headers?.["x-correlation-id"] ?? "n/a";
     const { ID } = req.params[0];
 
-    const [order] = await req.tx.run( SELECT.from(SalesOrders, ["ID", "orderNumber", "isCreditHold"])
-      .where({ ID })
-      .limit(1)
+    const [order] = await req.tx.run(
+      SELECT.from(SalesOrders, ["ID", "orderNumber", "isCreditHold"]).where({ ID }).limit(1)
     );
 
     if (!order) {
@@ -209,11 +201,11 @@ export function registerOrderLifecycleHandlers(srv) {
       });
     }
 
-    await req.tx.run( UPDATE(SalesOrders).set({ isCreditHold: false }).where({ ID }) );
+    await req.tx.run(UPDATE(SalesOrders).set({ isCreditHold: false }).where({ ID }));
 
     log.info({ correlationId, ID, orderNumber: order.orderNumber }, "Credit hold released");
 
-    const [updated] = await req.tx.run( SELECT.from(SalesOrders).where({ ID }).limit(1) );
+    const [updated] = await req.tx.run(SELECT.from(SalesOrders).where({ ID }).limit(1));
 
     return updated;
   });

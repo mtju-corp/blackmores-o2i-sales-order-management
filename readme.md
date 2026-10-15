@@ -20,3 +20,10 @@ It contains these folders and files, following our recommended project layout:
 ## Learn More
 
 Learn more at <https://cap.cloud.sap>.
+
+build:
+npx mbt build --mtar blackmores-o2i-sales-order-management
+
+deploy:
+cf deploy mta_archives/blackmores-o2i-sales-order-management.mtar \
+-e config/mtaext/dev.mtaext

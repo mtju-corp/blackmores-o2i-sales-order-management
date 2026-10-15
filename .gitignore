@@ -22,3 +22,5 @@ mta_archives/
 
 # Test coverage reports
 coverage/
+
+**/dist/

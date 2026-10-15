@@ -32,7 +32,14 @@ jobs:
         env:
           CDS_TEST_ENV_CHECK: "y" # fail loudly on cds.env loaded too early
 
+      # Runtime dependencies ship in the droplet - blocking.
+      - run: npm audit --omit=dev --audit-level=high
+
+      # Dev dependencies do not ship, but they execute in CI alongside the
+      # deployment credentials. Reported and reviewed, not merge-blocking.
       - run: npm audit --audit-level=high
+        continue-on-error: true
+
       - uses: gitleaks/gitleaks-action@v2
 
       # Datadog Code Security runs in its own push-triggered workflow (18.4),

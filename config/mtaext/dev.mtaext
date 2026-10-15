@@ -1,0 +1,8 @@
+_schema-version: "3.3.0"
+ID: blackmores-o2i-sales-order-management-dev
+extends: blackmores-o2i-sales-order-management
+
+modules:
+  - name: blackmores-o2i-sales-order-management-srv
+    parameters:
+      memory: 256M

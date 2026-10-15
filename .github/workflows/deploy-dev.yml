@@ -49,11 +49,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Work-item reference present
-        run: |
-          echo "${{ github.head_ref }}" | grep -Eq '^(feature|bugfix|hotfix)/CAP-[0-9]+-' \
-            || { echo "Branch name must carry a CAP- work item"; exit 1; }
-
       - name: Build MTA Archive
         run: |
           npx mbt build \

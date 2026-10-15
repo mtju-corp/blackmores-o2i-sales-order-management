@@ -75,6 +75,6 @@ jobs:
 
           cf deploy \
             mta_archives/blackmores-o2i-sales-order-management.mtar \
-            -e dev.mtaext \
+            -e config/mtaext/dev.mtaext \
             -f \
             --delete-services=false

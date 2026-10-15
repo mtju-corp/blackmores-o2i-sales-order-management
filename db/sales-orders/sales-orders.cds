@@ -16,7 +16,7 @@ using { com.blackmores.o2i.RejectionReasons }               from '../common';
 // ---------------------------------------------------------------------------
 entity SalesOrders : cuid, Auditable {
   @mandatory
-  orderNumber       : String(20);
+    orderNumber       : String(20);
 
   @mandatory
   customerName      : String(100);

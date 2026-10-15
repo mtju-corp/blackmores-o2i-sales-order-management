@@ -1,8 +1,10 @@
 node_modules/
+coverage/
 target/
 _out/
 gen/
 
+.vscode/launch.json
 .cdsrc-private.json
 default-*.json
 *.sqlite
@@ -17,3 +19,6 @@ mta_archives/
 
 # @cap-js/cds-typer
 @cds-models
+
+# Test coverage reports
+coverage/

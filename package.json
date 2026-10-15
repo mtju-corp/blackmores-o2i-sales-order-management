@@ -1,6 +1,6 @@
 {
   "name": "blackmores-o2i-sales-order-management",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "dependencies": {
     "@cap-js/hana": "^3",

@@ -63,7 +63,7 @@ annotate service.SalesOrders with @(
         {
             $Type : 'UI.DataFieldForAction',
             Action : 'SalesOrderManagementService.EntityContainer/getOrderSummary',
-            Label : 'getOrderSummary',
+            Label : 'get Order Summary',
         },
     ]
 );

@@ -169,7 +169,7 @@ export function registerOrderLifecycleHandlers(srv) {
 
     log.info(
       { correlationId, ID, orderNumber: order.orderNumber, reason },
-      "Sales order cancelled!!!"
+      "Sales order cancelled"
     );
 
     const [updated] = await req.tx.run(SELECT.from(SalesOrders).where({ ID }).limit(1));

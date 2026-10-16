@@ -54,5 +54,5 @@ jobs:
 
       - name: Work-item reference present
         run: |
-          echo "${{ github.head_ref }}" | grep -Eq '^(feature|bugfix|hotfix)/CAP-[0-9]+-' \
-            || { echo "Branch name must carry a CAP- work item"; exit 1; }
+          echo "${{ github.head_ref }}" | grep -Eq '^develop$|^(feature|bugfix|hotfix)/CAP-[0-9]+-' \
+            || { echo "Branch name must be develop or carry a CAP- work item"; exit 1; }

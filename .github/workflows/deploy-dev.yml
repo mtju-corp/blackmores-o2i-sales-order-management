@@ -1,0 +1,80 @@
+name: Deploy to DEV
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    environment: blkm-btp-dev
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: "npm" }
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+      - name: Commit message check
+        run: npx commitlint --from=${{ github.event.before }} --to=${{ github.sha }}
+
+      # Runs the suite once. The coverage floor is enforced by
+      # coverage.thresholds in vitest.config.js (15.1), not by a flag here.
+      - run: npm test
+        env:
+          CDS_TEST_ENV_CHECK: "y" # fail loudly on cds.env loaded too early
+
+      # Runtime dependencies ship in the droplet - blocking.
+      - run: npm audit --omit=dev --audit-level=high
+
+      # Dev dependencies do not ship, but they execute in CI alongside the
+      # deployment credentials. Reported and reviewed, not merge-blocking.
+      - run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build MTA Archive
+        run: |
+          npx mbt build \
+            --mtar blackmores-o2i-sales-order-management
+
+      - name: Install Cloud Foundry CLI
+        uses: jvalkeal/setup-cf-cli@v0
+        with:
+          version: 8.14.1
+
+      - name: Install MultiApps Plugin
+        run: |
+          cf add-plugin-repo CF-Community https://plugins.cloudfoundry.org
+          cf install-plugin multiapps -f
+
+      - name: Deploy to Cloud Foundry DEV
+        run: |
+          cf login \
+            -a "${{ vars.CF_API_DEV }}" \
+            -u "${{ secrets.CF_DEPLOY_USER }}" \
+            -p "${{ secrets.CF_DEPLOY_PASSWORD }}" \
+            -o "${{ vars.CF_ORG_DEV }}" \
+            -s dev
+
+          cf deploy \
+            mta_archives/blackmores-o2i-sales-order-management.mtar \
+            -e config/mtaext/dev.mtaext \
+            -f \
+            --delete-services=false

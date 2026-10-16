@@ -1,0 +1,58 @@
+name: PR validation
+on:
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: "npm" }
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+      - name: Commit message check
+        run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=HEAD
+
+      # Runs the suite once. The coverage floor is enforced by
+      # coverage.thresholds in vitest.config.js (15.1), not by a flag here.
+      - run: npm test
+        env:
+          CDS_TEST_ENV_CHECK: "y" # fail loudly on cds.env loaded too early
+
+      # Runtime dependencies ship in the droplet - blocking.
+      - run: npm audit --omit=dev --audit-level=high
+
+      # Dev dependencies do not ship, but they execute in CI alongside the
+      # deployment credentials. Reported and reviewed, not merge-blocking.
+      - run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Prove the MTA still builds. The archive is DISCARDED: the only promotable
+      # artefact is the one release.yml builds from a protected branch.
+      - name: MTA build check
+        run: |
+          npm i -g mbt
+          mbt build -p=cf --mtar=pr-check.mtar
+
+      - name: Work-item reference present
+        run: |
+          echo "${{ github.head_ref }}" | grep -Eq '^develop$|^(feature|bugfix|hotfix)/CAP-[0-9]+-' \
+            || { echo "Branch name must be develop or carry a CAP- work item"; exit 1; }

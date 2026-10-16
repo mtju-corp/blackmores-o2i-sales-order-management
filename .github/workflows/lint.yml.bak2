@@ -1,0 +1,77 @@
+name: Full-Stack CAP CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required for GitHub Releases
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install SAP Tooling & MBT
+        run: |
+          npm install -g @sap/cds-dk
+          npm install -g mbt
+
+      - name: Run Quality Checks & Linting
+        run: npm run lint
+
+      - name: Get Project Version
+        id: get_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Build MTA Archive
+        run: mbt build -t gen/mta_archives/
+
+      # 👇 REPLACED HAND-WRITTEN APT SETUP WITH AUTOMATED EXTENSION
+      - name: Install Cloud Foundry CLI
+        if: github.event_name == 'push'
+        uses: jvalkeal/setup-cf-cli@v0
+        with:
+          version: 8.14.1 # Explicitly targets production-grade CF v8
+
+      # 👇 Added step to install the crucial multiapps plugin for MTA archives
+      - name: Install CF MTA Plugin
+        if: github.event_name == 'push'
+        run: |
+          cf add-plugin-repo CF-Community https://plugins.cloudfoundry.org
+          cf install-plugin multiapps -f
+
+      - name: Deploy to Cloud Foundry (dev space)
+        if: github.event_name == 'push'
+        run: |
+          cf login -a "${{ secrets.BTP_CENTER_URL }}" \
+                   -u "${{ secrets.BTP_USER }}" \
+                   -p "${{ secrets.BTP_PASSWORD }}" \
+                   -o "${{ secrets.BTP_ORG }}" \
+                   -s dev
+          cf deploy gen/mta_archives/*.mtar -f
+
+      - name: Create Production Release & Upload MTAR
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
+          draft: false
+          prerelease: false
+          files: gen/mta_archives/*.mtar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,70 @@
+name: Release
+on:
+  push:
+    branches:
+      - release/**
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    environment: blkm-btp-dev
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: "npm" }
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+      - name: Commit message check
+        run: npx commitlint --from=${{ github.event.before }} --to=${{ github.sha }}
+
+      # Runs the suite once. The coverage floor is enforced by
+      # coverage.thresholds in vitest.config.js (15.1), not by a flag here.
+      - run: npm test
+        env:
+          CDS_TEST_ENV_CHECK: "y" # fail loudly on cds.env loaded too early
+
+      # Runtime dependencies ship in the droplet - blocking.
+      - run: npm audit --omit=dev --audit-level=high
+
+      # Dev dependencies do not ship, but they execute in CI alongside the
+      # deployment credentials. Reported and reviewed, not merge-blocking.
+      - run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Project Version
+        id: get_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Build MTA Archive
+        run: |
+          npx mbt build \
+            --mtar blackmores-o2i-sales-order-management
+
+      - name: Create Production Release & Upload MTAR
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
+          draft: false
+          prerelease: false
+          files: mta_archives/blackmores-o2i-sales-order-management.mtar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

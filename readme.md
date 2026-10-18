@@ -21,9 +21,20 @@ It contains these folders and files, following our recommended project layout:
 
 Learn more at <https://cap.cloud.sap>.
 
+commit and push to feature/CAP-1234-new-feature:
+----------------------------------------------------------------------------------------------
+
+git add .
+git commit -m "chore(package): release workflow" -m "release workflow" -m "Refs: CAP-1262"
+git push origin feature/CAP-1234-new-feature
+
 build:
+----------------------------------------------------------------------------------------------
+
 npx mbt build --mtar blackmores-o2i-sales-order-management
 
 deploy:
+----------------------------------------------------------------------------------------------
+
 cf deploy mta_archives/blackmores-o2i-sales-order-management.mtar \
 -e config/mtaext/dev.mtaext

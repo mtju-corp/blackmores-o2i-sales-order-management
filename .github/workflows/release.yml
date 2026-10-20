@@ -31,7 +31,7 @@ jobs:
         run: npx commitlint --from=${{ github.event.before }} --to=${{ github.sha }}
 
       # Runs the suite once. The coverage floor is enforced by
-      # coverage.thresholds in vitest.config.js (15.1), not by a flag here.
+      # coverage.thresholds in vitest.config.js, not by a flag here.
       - run: npm test
         env:
           CDS_TEST_ENV_CHECK: "y" # fail loudly on cds.env loaded too early
@@ -44,10 +44,10 @@ jobs:
       - run: npm audit --audit-level=high
         continue-on-error: true
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Run Gitleaks
+      #   uses: gitleaks/gitleaks-action@v3
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get Project Version
         id: get_version

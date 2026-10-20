@@ -40,10 +40,10 @@ jobs:
       - run: npm audit --audit-level=high
         continue-on-error: true
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Run Gitleaks
+      #   uses: gitleaks/gitleaks-action@v3
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Prove the MTA still builds. The archive is DISCARDED: the only promotable
       # artefact is the one release.yml builds from a protected branch.

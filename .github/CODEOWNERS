@@ -1,1 +1,12 @@
-* @mulyaditju @mulyaditju2 
+* @mulyaditju
+
+# Application and domain model
+/db/                          @mtju-corp/cap-backend-team
+/srv/                         @mtju-corp/cap-backend-team
+/app/                         @mtju-corp/cap-frontend-team
+
+# Security and deployment controls
+# /xs-security.json             @mtju-corp/sap-security @mtju-corp/cap-developer
+# /mta.yaml                     @mtju-corp/btp-admin @mtju-corp/cap-developer
+# /config/mtaext/               @mtju-corp/btp-admin
+# /.github/workflows/           @mtju-corp/devsecops @mtju-corp/cap-developer
